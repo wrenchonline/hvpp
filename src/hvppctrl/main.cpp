@@ -209,10 +209,44 @@ void TestHook()
   free(OriginalFunctionBackup);
 }
 
+#define IOCTL_HVPP_TEST     CTL_CODE(FILE_DEVICE_UNKNOWN,   \
+                                     0x800,                 \
+                                     METHOD_BUFFERED,       \
+                                     FILE_READ_ACCESS | FILE_WRITE_ACCESS)
+
+void TestIoControl()
+{
+  HANDLE DeviceHandle;
+
+  DeviceHandle = CreateFile(TEXT("\\\\.\\hvpp"),
+                            GENERIC_READ | GENERIC_WRITE,
+                            FILE_SHARE_READ | FILE_SHARE_WRITE,
+                            NULL,
+                            OPEN_EXISTING,
+                            0,
+                            NULL);
+
+  BYTE Buffer[64] = "Input";
+  DWORD OutputBufferSize = 0;
+  DeviceIoControl(DeviceHandle,
+                  IOCTL_HVPP_TEST,
+                  Buffer,
+                  sizeof(Buffer),
+                  Buffer,
+                  sizeof(Buffer),
+                  &OutputBufferSize,
+                  NULL);
+
+  CloseHandle(DeviceHandle);
+
+  printf("IOCTL: '%s'\n", Buffer);
+}
+
 int main()
 {
   TestCpuid();
   TestHook();
+  TestIoControl();
 
   return 0;
 }
